@@ -18,13 +18,20 @@ const newEntry = async (req, res) => {
     return res.status(200).send({ data: newEntry[0] });
   } catch (error) {
     console.log(error);
-    return res.status(500).send({ message: "Error adding entry" });
+    res.status(400).send({ message: "Error adding entry" });
   }
 };
 
 //GET all entries of the user
 const getEntries = async (req, res) => {
   const userId = res.locals.userId;
+
+  try {
+    const entries = await db(entries).where({ user_id: userId }).select();
+    res.status(200).send({ data: entries });
+  } catch (error) {
+    res.status(400).send({ message: "Error getting entries" });
+  }
 };
 const getEntry = async (req, res) => {
   const userId = res.locals.userId;
