@@ -63,8 +63,8 @@ const signup = async (req, res) => {
     //Generate accesstoken
     const accesstoken = generateAccessToken(newUser[0]);
 
-    //Send  success response
-    return res.status(200).send({
+    //Send success response
+    res.status(200).send({
       data: {
         firstName: newUser[0].first_name,
         lastName: newUser[0].last_name,
@@ -73,7 +73,7 @@ const signup = async (req, res) => {
       },
     });
   } catch (error) {
-    return res.status(500).send({ message: "Internal server error" });
+    res.status(500).send({ message: "Internal server error" });
   }
 };
 
@@ -89,12 +89,12 @@ const login = async (req, res) => {
   const user = await db("users").where("email", email).first();
 
   if (!user) {
-    return res.status(400).send({ message: "email could not be found" });
+    res.status(400).send({ message: "email could not be found" });
   }
   const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
   if (!isPasswordCorrect) {
-    return res.status(400).send({ message: "Invalid password" });
+    res.status(400).send({ message: "Invalid password" });
   }
 
   const accessToken = generateAccessToken(user);

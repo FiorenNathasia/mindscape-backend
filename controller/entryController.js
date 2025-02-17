@@ -27,7 +27,7 @@ const getEntries = async (req, res) => {
   const userId = res.locals.userId;
 
   try {
-    const entries = await db(entries).where({ user_id: userId }).select();
+    const entries = await db("entries").where({ user_id: userId }).select();
     res.status(200).send({ data: entries });
   } catch (error) {
     res.status(400).send({ message: "Error getting entries" });
@@ -35,6 +35,21 @@ const getEntries = async (req, res) => {
 };
 const getEntry = async (req, res) => {
   const userId = res.locals.userId;
+  const videoId = req.params.id;
+
+  try {
+    const entry = await db("entries")
+      .where({ id: videoId, user_id: userId })
+      .select()
+      .first();
+
+    if (!entry) {
+      throw new Error("Cannot find workout.");
+    }
+    res.status(200).send({ data: entry });
+  } catch (error) {
+    res.status(404).send({ message: "The entry could not found." });
+  }
 };
 const editEntry = async (req, res) => {};
 const deleteEntry = async (req, res) => {};
