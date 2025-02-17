@@ -9,7 +9,8 @@ function verify(req, res, next) {
   try {
     const token = authHeader.split(" ")[1];
     const userId = jwt.verify(token, "mySecretKey").id;
-    res.locals.id = userId;
+
+    res.locals.userId = userId;
     next();
   } catch (error) {
     return res.status(403).send({ message: "Token is invalid!" });

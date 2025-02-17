@@ -10,6 +10,7 @@ app.use(express.json());
 app.use(cors());
 
 app.use("/api/auth", authRouter);
+
 app.use(verify);
 
 app.use("/api/user", userRouter);
