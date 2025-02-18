@@ -35,11 +35,11 @@ const getEntries = async (req, res) => {
 };
 const getEntry = async (req, res) => {
   const userId = res.locals.userId;
-  const videoId = req.params.id;
+  const entryId = req.params.id;
 
   try {
     const entry = await db("entries")
-      .where({ id: videoId, user_id: userId })
+      .where({ id: entryId, user_id: userId })
       .select()
       .first();
 
@@ -51,7 +51,28 @@ const getEntry = async (req, res) => {
     res.status(404).send({ message: "The entry could not found." });
   }
 };
-const editEntry = async (req, res) => {};
+const editEntry = async (req, res) => {
+  const userId = res.locals.userId;
+  const entryId = req.params.id;
+  const entryUpdates = req.body;
+  try {
+    const entry = await db("entries")
+      .where({ id: entryId, user_id: userId })
+      .first();
+
+    if (!entry) {
+      throw new Error("Cannot find entry");
+    }
+
+    await db("entries")
+      .where({ id: entryId, user_id: userId })
+      .update(entryUpdates);
+    res.status(200).send({ message: "Entry edited successfully!" });
+  } catch (error) {
+    console.log(error);
+    res.status(404).send({ message: "The error occured while editing entry!" });
+  }
+};
 const deleteEntry = async (req, res) => {};
 
 module.exports = {
