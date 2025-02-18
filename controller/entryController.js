@@ -73,7 +73,25 @@ const editEntry = async (req, res) => {
     res.status(404).send({ message: "The error occured while editing entry!" });
   }
 };
-const deleteEntry = async (req, res) => {};
+const deleteEntry = async (req, res) => {
+  const userId = res.locals.userId;
+  const entryId = req.params.id;
+
+  try {
+    const entry = await db("entries")
+      .where({ id: entryId, user_id: userId })
+      .first();
+
+    if (!entry) {
+      throw new Error("Cannot find entry!");
+    }
+    const deletedEntry = await db("entries").where({ id: entryId }).del();
+
+    res.status(200).send({ message: "Entry deleted successfully!" });
+  } catch (error) {
+    res.status(404).send({ message: "There was an error deleting entry!" });
+  }
+};
 
 module.exports = {
   newEntry,

@@ -6,6 +6,6 @@ router.post("/newentry", entryController.newEntry);
 router.get("/", entryController.getEntries);
 router.get("/:id", entryController.getEntry);
 router.patch("/:id", entryController.editEntry);
-router.delete("/", entryController.deleteEntry);
+router.delete("/:id", entryController.deleteEntry);
 
 module.exports = router;
