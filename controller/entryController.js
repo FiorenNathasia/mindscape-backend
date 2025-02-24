@@ -2,7 +2,7 @@ const db = require("../db/db");
 
 //POST request for new journal entry
 const newEntry = async (req, res) => {
-  const { title, date, sketch, entry } = req.body;
+  const { title, date, sketch, text } = req.body;
   const userId = res.locals.userId;
 
   try {
@@ -10,9 +10,8 @@ const newEntry = async (req, res) => {
       .insert({
         user_id: userId,
         title,
-        date,
         sketch,
-        entry,
+        text,
       })
       .returning("*");
     return res.status(200).send({ data: newEntry[0] });
@@ -29,10 +28,13 @@ const getEntries = async (req, res) => {
   try {
     const entries = await db("entries").where({ user_id: userId }).select();
     res.status(200).send({ data: entries });
+    console.log(entries);
   } catch (error) {
     res.status(400).send({ message: "Error getting entries" });
   }
 };
+
+//GET an entry
 const getEntry = async (req, res) => {
   const userId = res.locals.userId;
   const entryId = req.params.id;
@@ -51,6 +53,8 @@ const getEntry = async (req, res) => {
     res.status(404).send({ message: "The entry could not found." });
   }
 };
+
+//PUT to edit entry
 const editEntry = async (req, res) => {
   const userId = res.locals.userId;
   const entryId = req.params.id;
@@ -73,6 +77,8 @@ const editEntry = async (req, res) => {
     res.status(404).send({ message: "The error occured while editing entry!" });
   }
 };
+
+//DELETE an entry
 const deleteEntry = async (req, res) => {
   const userId = res.locals.userId;
   const entryId = req.params.id;

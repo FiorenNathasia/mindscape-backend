@@ -12,9 +12,8 @@ exports.up = function (knex) {
       .onUpdate("CASCADE")
       .onDelete("CASCADE");
     table.string("title").notNullable();
-    table.date("date").nullable();
-    table.text("sketch").notNullable();
-    table.text("entry").notNullable();
+    table.text("sketch").nullable();
+    table.text("text").notNullable();
     table.timestamp("created_at").defaultTo(knex.fn.now());
     table.timestamp("updated_at").defaultTo(knex.fn.now());
   });
