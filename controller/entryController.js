@@ -28,7 +28,6 @@ const getEntries = async (req, res) => {
   try {
     const entries = await db("entries").where({ user_id: userId }).select();
     res.status(200).send({ data: entries });
-    console.log(entries);
   } catch (error) {
     res.status(400).send({ message: "Error getting entries" });
   }
