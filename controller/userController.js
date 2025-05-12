@@ -5,7 +5,12 @@ const getUser = async (req, res) => {
 
   try {
     const userInfo = await db("users").where({ id: userId }).first();
-    res.status(200).send({
+
+    if (!userInfo) {
+      return res.status(404).send({ message: "User not found" });
+    }
+
+    return res.status(200).send({
       data: {
         firstName: userInfo.first_name,
         lastName: userInfo.last_name,
@@ -13,7 +18,7 @@ const getUser = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(404).send({ message: "Error retrieving user information" });
+    res.status(500);
   }
 };
 
