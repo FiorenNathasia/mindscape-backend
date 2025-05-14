@@ -17,7 +17,7 @@ const newEntry = async (req, res) => {
     return res.status(200).send({ data: newEntry[0] });
   } catch (error) {
     console.log(error);
-    res.status(400).send({ message: "Error adding entry" });
+    return res.status(400).send({ message: "Error adding entry" });
   }
 };
 
@@ -27,9 +27,9 @@ const getEntries = async (req, res) => {
 
   try {
     const entries = await db("entries").where({ user_id: userId }).select();
-    res.status(200).send({ data: entries });
+    return res.status(200).send({ data: entries });
   } catch (error) {
-    res.status(400).send({ message: "Error getting entries" });
+    return res.status(400).send({ message: "Error getting entries" });
   }
 };
 
@@ -47,9 +47,9 @@ const getEntry = async (req, res) => {
     if (!entry) {
       throw new Error("Cannot find workout.");
     }
-    res.status(200).send({ data: entry });
+    return res.status(200).send({ data: entry });
   } catch (error) {
-    res.status(404).send({ message: "The entry could not found." });
+    return res.status(404).send({ message: "The entry could not found." });
   }
 };
 
@@ -70,10 +70,12 @@ const editEntry = async (req, res) => {
     await db("entries")
       .where({ id: entryId, user_id: userId })
       .update(entryUpdates);
-    res.status(200).send({ message: "Entry edited successfully!" });
+    return res.status(200).send({ message: "Entry edited successfully!" });
   } catch (error) {
     console.log(error);
-    res.status(404).send({ message: "The error occured while editing entry!" });
+    return res
+      .status(404)
+      .send({ message: "The error occured while editing entry!" });
   }
 };
 
@@ -92,9 +94,9 @@ const deleteEntry = async (req, res) => {
     }
     const deletedEntry = await db("entries").where({ id: entryId }).del();
 
-    res.status(200).send({ message: "Entry deleted successfully!" });
+    return res.status(200).send({ message: "Entry deleted successfully!" });
   } catch (error) {
-    res.status(404).send({ message: "There was an error deleting entry!" });
+    return (404).send({ message: "There was an error deleting entry!" });
   }
 };
 

@@ -44,7 +44,7 @@ const signup = async (req, res) => {
     const user = await db("users").where("email", email).first();
 
     if (user) {
-      res.status(400).send({ message: "User already exists" });
+      return res.status(400).send({ message: "User already exists" });
     }
 
     //Hash the password
@@ -64,7 +64,7 @@ const signup = async (req, res) => {
     const accesstoken = generateAccessToken(newUser[0]);
 
     //Send success response
-    res.status(200).send({
+    return es.status(200).send({
       data: {
         firstName: newUser[0].first_name,
         lastName: newUser[0].last_name,
@@ -73,7 +73,7 @@ const signup = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500);
+    return res.status(500);
   }
 };
 
@@ -89,17 +89,17 @@ const login = async (req, res) => {
   const user = await db("users").where("email", email).first();
 
   if (!user) {
-    res.status(400).send({ message: "email could not be found" });
+    return res.status(400).send({ message: "email could not be found" });
   }
   const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
   if (!isPasswordCorrect) {
-    res.status(400).send({ message: "Invalid password" });
+    return res.status(400).send({ message: "Invalid password" });
   }
 
   const accessToken = generateAccessToken(user);
 
-  res.status(200).send({
+  return res.status(200).send({
     message: "You have succesfully logged in!",
     data: {
       firstName: user.first_name,
