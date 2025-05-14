@@ -16,6 +16,8 @@ app.use(verify);
 app.use("/api/user", userRouter);
 app.use("/api/entry", entryRouter);
 
-app.listen(3030, () => {
+const port = process.env.PORT || 3030;
+
+app.listen(port, () => {
   console.log("server listening on 3030");
 });
