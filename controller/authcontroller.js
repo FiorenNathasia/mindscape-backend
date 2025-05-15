@@ -64,7 +64,7 @@ const signup = async (req, res) => {
     const accesstoken = generateAccessToken(newUser[0]);
 
     //Send success response
-    return es.status(200).send({
+    return res.status(200).send({
       data: {
         firstName: newUser[0].first_name,
         lastName: newUser[0].last_name,
