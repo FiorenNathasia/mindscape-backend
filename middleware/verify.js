@@ -13,6 +13,7 @@ function verify(req, res, next) {
     res.locals.userId = userId;
     next();
   } catch (error) {
+    console.log(error);
     return res.status(403).send({ message: "Token is invalid!" });
   }
 }

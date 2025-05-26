@@ -19,5 +19,5 @@ app.use("/api/entry", entryRouter);
 const port = process.env.PORT || 3030;
 
 app.listen(port, () => {
-  console.log("server listening on 3030");
+  console.log(`server listening on ${port}`);
 });
