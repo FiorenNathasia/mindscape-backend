@@ -26,7 +26,10 @@ const getEntries = async (req, res) => {
   const userId = res.locals.userId;
 
   try {
-    const entries = await db("entries").where({ user_id: userId }).select();
+    const entries = await db("entries")
+      .where({ user_id: userId })
+      .orderBy("updated_at", "desc")
+      .select();
     return res.status(200).send({ data: entries });
   } catch (error) {
     return res.status(400).send({ message: "Error getting entries" });
@@ -69,7 +72,7 @@ const editEntry = async (req, res) => {
 
     await db("entries")
       .where({ id: entryId, user_id: userId })
-      .update(entryUpdates);
+      .update({ ...entryUpdates, updated_at: new Date().toISOString() });
     return res.status(200).send({ message: "Entry edited successfully!" });
   } catch (error) {
     console.log(error);
