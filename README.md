@@ -18,6 +18,15 @@ This service handles user authentication, journal entry management, image storag
 
 ---
 
+## Endpoints
+
+- `POST /api/entries` – Creates a new journal entry
+- `GET /api/entries` – Returns all journal entries for the current user
+- `GET /api/entries/:id` – Returns a specific journal entry by ID
+- `PUT /api/entries/:id` – Updates a specific journal entry
+- `DELETE /api/entries/:id` – Deletes a specific journal entry
+
+---
 ## 🛠️ Tech Stack
 
 - **Node.js**
