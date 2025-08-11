@@ -1,8 +1,9 @@
 const db = require("../db/db");
+const { addTagsToEntry } = require("../services/tags");
 
 //POST request for new journal entry
 const newEntry = async (req, res) => {
-  const { title, date, sketch, text } = req.body;
+  const { title, sketch, text, tags = [] } = req.body;
   const userId = res.locals.userId;
 
   try {
@@ -14,7 +15,19 @@ const newEntry = async (req, res) => {
         text,
       })
       .returning("*");
-    return res.status(200).send({ data: newEntry[0] });
+
+    const entry = newEntry[0];
+    let attachedTags = [];
+
+    if (tags.length > 0) {
+      attachedTags = await addTagsToEntry({
+        entryId: entry.id,
+        userId,
+        tags,
+      });
+    }
+
+    return res.status(200).send({ data: entry, tags: attachedTags });
   } catch (error) {
     console.log(error);
     return res.status(400).send({ message: "Error adding entry" });
@@ -30,7 +43,43 @@ const getEntries = async (req, res) => {
       .where({ user_id: userId })
       .orderBy("updated_at", "desc")
       .select();
-    return res.status(200).send({ data: entries });
+
+    const entryIds = entries.map((entry) => entry.id);
+    if (entryIds.length === 0) {
+      return res.status(200).send({ data: [] });
+    }
+
+    //To get the tags for the entry, you access the entry_tags table
+    const entryTags = await db("entry_tags")
+      //You join to tags table to connect the tag_id from the collum in entry_tag table, and the ids of the tags in the tags table
+      .join("tags", "entry_tags.tag_id", "tags.id")
+      //In the entry_tag table, you acees the entry_id column to get the ids of the entries
+      .whereIn("entry_tags.entry_id", entryIds)
+      //In tags table, you access user_id column to get the only the tags owned by the user
+      .andWhere("tags.user_id", userId)
+      //And you return the names of the tag for the given entry ids
+      .select("entry_tags.entry_id", "tags.name");
+
+    //Create and empty object to hold the tagNames
+    const tagsByEntryId = {};
+    //From the db query entryTags, you loop through each data and take the entry id with the name fo the tags
+    entryTags.forEach(({ entry_id, name }) => {
+      //if there's is no existing array of tag names for the entry id
+      if (!tagsByEntryId[entry_id]) {
+        //Set the entry id with an emptry array
+        tagsByEntryId[entry_id] = [];
+      }
+      //Add the tag name to the array for this entry ID (creating the array first if it doesn’t exist).
+      tagsByEntryId[entry_id].push(name);
+    });
+
+    //Map through the entries, and for each entry add the tags assosciated with the entry from the previous tagsByEntryId
+    const entriesWithTags = entries.map((entry) => ({
+      ...entry,
+      tags: tagsByEntryId[entry.id] || [],
+    }));
+
+    return res.status(200).send({ data: entriesWithTags });
   } catch (error) {
     return res.status(400).send({ message: "Error getting entries" });
   }
@@ -50,7 +99,18 @@ const getEntry = async (req, res) => {
     if (!entry) {
       throw new Error("Cannot find workout.");
     }
-    return res.status(200).send({ data: entry });
+    const tags = await db("entry_tags")
+      .join("tags", "entry_tags.tag_id", "tags.id")
+      .where("entry_tags.entry_id", entryId)
+      .andWhere("tags.user_id", userId)
+      .select("tags.name");
+
+    const tagNames = tags.map((tag) => tag.name);
+
+    return res.status(200).send({
+      data: entry,
+      tags: tagNames,
+    });
   } catch (error) {
     return res.status(404).send({ message: "The entry could not found." });
   }

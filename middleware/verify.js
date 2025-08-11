@@ -15,6 +15,13 @@ function verify(req, res, next) {
     next();
   } catch (error) {
     console.log(error);
+
+    if (error.name === "TokenExpiredError") {
+      return res
+        .status(401)
+        .json({ message: "Token expired, please login again!" });
+    }
+
     return res.status(403).send({ message: "Token is invalid!" });
   }
 }
