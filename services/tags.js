@@ -45,7 +45,7 @@ const addTagsToEntry = async ({ entryId, userId, tags }) => {
     // Filter out tag IDs that are already linked to the entry
     .filter((tagId) => !existingEntryTags.includes(tagId))
     //You go through the array of the filtered ids that aren't already linked to the entry
-    // Prepare new entry-tag mappings for insertion
+    // Prepare new entry_tag mappings for insertion
     .map((tagId) => ({ entry_id: entryId, tag_id: tagId }));
   //And if the length of the id is greater than 0
   if (newEntryTags.length > 0) {
