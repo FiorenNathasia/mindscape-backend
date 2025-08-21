@@ -35,7 +35,6 @@ Return the tags as a comma-separated list, lowercase, no extra words.
     { headers }
   );
   let tags = response.data.choices[0].message.content || "";
-  console.log(tags);
   return (
     tags
       //You split the array of suggested tags by the ","
