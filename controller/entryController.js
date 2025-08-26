@@ -174,7 +174,7 @@ const editEntry = async (req, res) => {
   const { title, text, sketch, tags = [] } = req.body;
 
   try {
-    // Fetch the entry from the database for the current user
+    // Fetch the entry from the database for the current user//
     let entry = await db("entries")
       //Of the current entry id and user id
       .where({ id: entryId, user_id: userId })
@@ -186,7 +186,7 @@ const editEntry = async (req, res) => {
       return res.status(404).send({ message: "Entry not found" });
     }
 
-    // Update the entry's title, text, and sketch
+    // Update the entry's title, text, and sketch//
     // Acces the entries table
     await db("entries")
       //For the current entry and user
@@ -194,7 +194,7 @@ const editEntry = async (req, res) => {
       //Update the title, text, sketch from the req.body above
       .update({ title, text, sketch, updated_at: new Date().toISOString() });
 
-    // Fetch current tags associated with this entry for this user
+    // Fetch current tags associated with this entry for this user//
     const tagRows = await db("entry_tags")
       //Join with the tags table, with the shared id of the tag from both tables
       .join("tags", "entry_tags.tag_id", "tags.id")
@@ -210,25 +210,25 @@ const editEntry = async (req, res) => {
     // Get an array of new tags from request body, trimming whitespace
     const newTags = tags.map((t) => t.trim());
 
-    // Normalize tags for case-insensitive comparison
+    // Normalize tags for case-insensitive comparison//
     //Make all the currentTags to lower case to normalize for comparison
     const currentTagsLower = currentTags.map((t) => t.toLowerCase());
     //Do the same for the new inserted tags for req.body
     const newTagsLower = newTags.map((t) => t.toLowerCase());
 
-    // Determine which tags need to be added
+    // Determine which tags need to be added//
     //Go through the array of the newTags, if the newTags exist in the existing tags, filter them out
     const tagsToAdd = newTags.filter(
       (t, i) => !currentTagsLower.includes(newTagsLower[i])
     );
 
-    // Determine which tags need to be removed
+    // Determine which tags need to be removed//
     //If the current tags are not found in the newTags array, filter them out for removal
     const tagsToRemove = currentTags.filter(
       (t, i) => !newTagsLower.includes(currentTagsLower[i])
     );
 
-    // Remove tags that are no longer needed
+    // Remove tags that are no longer needed//
     //If the tags to remove length is greater than 0
     if (tagsToRemove.length > 0) {
       //From the entry tags table
@@ -236,22 +236,24 @@ const editEntry = async (req, res) => {
         //For the current entry
         .where("entry_id", entryId)
         //Find the id of the tag in the tag_id colum in the entry_tag table
+        // Find rows where tag_id is in...
         .whereIn(
           "tag_id",
-          //And in thr tags table
+          //And in the tags table
+          //(subquery: look in tags table)
           db("tags")
-            //Find the name that matches the tagsToRemove
+            //Find the tag names that matches the tagsToRemove
             .whereIn("name", tagsToRemove)
-            //For the current user
+            //Only for the current user
             .andWhere("user_id", userId)
-            //Get the if of the tags
+            //Get the id of the tags
             .select("id")
         )
         //And delete those tags
         .del();
     }
 
-    // Add new tags
+    // Add new tags//
     //Loop through the array of the tags in the tagsToAdd array
     for (const tagName of tagsToAdd) {
       // Check if the tag already exists for the user
@@ -284,7 +286,7 @@ const editEntry = async (req, res) => {
     //Get the current entry of the current user
     entry = await db("entries").where({ id: entryId, user_id: userId }).first();
 
-    // Fetch the updated manual tags for this entry
+    // Fetch the updated manual tags for this entry//
     //From the entry_tags table
     const manualTags = await db("entry_tags")
       //Where you connect to the tags table and the id of the tags from both tables
