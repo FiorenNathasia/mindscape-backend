@@ -1,7 +1,7 @@
 const axios = require("axios");
 const openAiKey = process.env.OPEN_AI_KEY;
 
-async function chatgpt({ title, text, manualTags = [] }) {
+async function chatgpt({ title, text, manualTags }) {
   const headers = {
     "Content-Type": "application/json",
     Authorization: `Bearer ${openAiKey}`,
@@ -17,6 +17,7 @@ async function chatgpt({ title, text, manualTags = [] }) {
 
     Do NOT suggest any of the following tags (the user already added these manually):
 ${manualTags}
+
 
 Return the tags as a comma-separated list, lowercase, no extra words.
   `;

@@ -171,7 +171,7 @@ const editEntry = async (req, res) => {
   const entryId = req.params.id;
   // Destructure title, text, sketch, and tags from the request body
   // Default tags to an empty array if not provided
-  const { title, text, sketch, tags = [] } = req.body;
+  const { title, text, sketch, tags } = req.body;
 
   try {
     // Fetch the entry from the database for the current user//
@@ -207,27 +207,23 @@ const editEntry = async (req, res) => {
 
     // Get an array of current tag names, trimming whitespace
     const currentTags = tagRows.map((t) => t.name.trim());
-    // Get an array of new tags from request body, trimming whitespace
-    const newTags = tags.map((t) => t.trim());
-
     // Normalize tags for case-insensitive comparison//
     //Make all the currentTags to lower case to normalize for comparison
     const currentTagsLower = currentTags.map((t) => t.toLowerCase());
-    //Do the same for the new inserted tags for req.body
-    const newTagsLower = newTags.map((t) => t.toLowerCase());
 
+    // Chech if tags from req.body is and array with the tags (truthy/falsy)
+    // If there is, map through the tags and trim the white space for comparison
+    //If is a falsely or there's nothing
+    const newTags = Array.isArray(tags) ? tags.map((t) => t.trim()) : [];
+    const newTagsLower = newTags.map((t) => t.toLowerCase());
     // Determine which tags need to be added//
     //Go through the array of the newTags, if the newTags exist in the existing tags, filter them out
     const tagsToAdd = newTags.filter(
-      (t, i) => !currentTagsLower.includes(newTagsLower[i])
+      (t) => !currentTagsLower.includes(t.toLowerCase())
     );
-
-    // Determine which tags need to be removed//
-    //If the current tags are not found in the newTags array, filter them out for removal
     const tagsToRemove = currentTags.filter(
-      (t, i) => !newTagsLower.includes(currentTagsLower[i])
+      (t) => !newTagsLower.includes(t.toLowerCase())
     );
-
     // Remove tags that are no longer needed//
     //If the tags to remove length is greater than 0
     if (tagsToRemove.length > 0) {
@@ -300,13 +296,13 @@ const editEntry = async (req, res) => {
 
     // Normalize manual tags for comparison with AI-generated suggestions
     //Go through the manualTags array and trim the white space of the tag and make it all lowercase
-    const manualTagsNormalized = manualTags.map((t) => t.trim().toLowerCase());
+    const manualTagsNormalized = newTags.map((t) => t.toLowerCase());
 
     // Generate AI-suggested tags based on the entry's title, text, and manual tags
     const suggestedTags = await chatgpt({
-      title: entry.title,
-      text: entry.text,
-      manualTags,
+      title,
+      text,
+      manualTags: tags,
     });
 
     // Filter out AI suggestions that already exist as manual tags
@@ -314,9 +310,11 @@ const editEntry = async (req, res) => {
     //Go through the suggestedTags arrays, and if the suggestedTag is found in the existing manualTags array
     //Filter those tags out
     //also trim and make those tags to lower case to make sure the comparison is accurate
-    const aiTags = suggestedTags.filter(
-      (tag) => !manualTagsNormalized.includes(tag.trim().toLowerCase())
-    );
+    const aiTags = suggestedTags
+      .map((t) => t.trim().toLowerCase())
+      .filter(
+        (tag) => !manualTagsNormalized.includes(tag.trim().toLowerCase())
+      );
 
     // Return the updated entry along with manual and AI-suggested tags
     return res.status(200).send({
