@@ -163,38 +163,38 @@ const getEntry = async (req, res) => {
   }
 };
 
-//PUT to edit entry
+//PUT to edit entry//
 const editEntry = async (req, res) => {
-  // Get the current user's ID
+  //Get the current user's ID
   const userId = res.locals.userId;
-  // Get the ID of the entry to edit
+  //Get the ID of the entry to edit
   const entryId = req.params.id;
-  // Destructure title, text, sketch, and tags from the request body
-  // Default tags to an empty array if not provided
+  //Destructure title, text, sketch, and tags from the request body
+  //Default tags to an empty array if not provided
   const { title, text, sketch, tags } = req.body;
 
   try {
-    // Fetch the entry from the database for the current user//
+    //Fetch the entry from the database for the current user//
     let entry = await db("entries")
       //Of the current entry id and user id
       .where({ id: entryId, user_id: userId })
       //The first entry that matches that
       .first();
 
-    // Return 404 if the entry does not exist or does not belong to the user
+    //Return 404 if the entry does not exist or does not belong to the user
     if (!entry) {
       return res.status(404).send({ message: "Entry not found" });
     }
 
-    // Update the entry's title, text, and sketch//
-    // Acces the entries table
+    //Update the entry's title, text, and sketch//
+    //Access the entries table
     await db("entries")
       //For the current entry and user
       .where({ id: entryId, user_id: userId })
       //Update the title, text, sketch from the req.body above
       .update({ title, text, sketch, updated_at: new Date().toISOString() });
 
-    // Fetch current tags associated with this entry for this user//
+    //Fetch current tags associated with this entry for this user//
     const tagRows = await db("entry_tags")
       //Join with the tags table, with the shared id of the tag from both tables
       .join("tags", "entry_tags.tag_id", "tags.id")
@@ -205,26 +205,31 @@ const editEntry = async (req, res) => {
       //Find the id and name of the tag from the tag table for the current user and entry
       .select("tags.id", "tags.name");
 
-    // Get an array of current tag names, trimming whitespace
+    //Get an array of current tag names, trimming whitespace
     const currentTags = tagRows.map((t) => t.name.trim());
-    // Normalize tags for case-insensitive comparison//
+    //Normalize tags for case-insensitive comparison//
     //Make all the currentTags to lower case to normalize for comparison
     const currentTagsLower = currentTags.map((t) => t.toLowerCase());
 
-    // Chech if tags from req.body is and array with the tags (truthy/falsy)
-    // If there is, map through the tags and trim the white space for comparison
-    //If is a falsely or there's nothing
+    //Chech if tags from req.body is and array with the tags (truthy/falsy)
+    //If there is, map through the tags and trim the white space for comparison
+    //If is a falsely or there's nothing just return and empty array
     const newTags = Array.isArray(tags) ? tags.map((t) => t.trim()) : [];
     const newTagsLower = newTags.map((t) => t.toLowerCase());
-    // Determine which tags need to be added//
+
+    //Determine which tags need to be added//
     //Go through the array of the newTags, if the newTags exist in the existing tags, filter them out
     const tagsToAdd = newTags.filter(
       (t) => !currentTagsLower.includes(t.toLowerCase())
     );
-    const tagsToRemove = currentTags.filter(
-      (t) => !newTagsLower.includes(t.toLowerCase())
-    );
-    // Remove tags that are no longer needed//
+
+    //Determine which tags need to be removed//
+    //Go through the array of the newTags, if the newTags exist in the existing tags, filter them out
+    const tagsToRemove = Array.isArray(tags)
+      ? currentTags.filter((t) => !newTagsLower.includes(t.toLowerCase()))
+      : [];
+
+    //Remove tags that are no longer needed//
     //If the tags to remove length is greater than 0
     if (tagsToRemove.length > 0) {
       //From the entry tags table
@@ -232,7 +237,7 @@ const editEntry = async (req, res) => {
         //For the current entry
         .where("entry_id", entryId)
         //Find the id of the tag in the tag_id colum in the entry_tag table
-        // Find rows where tag_id is in...
+        //Find rows where tag_id is in...
         .whereIn(
           "tag_id",
           //And in the tags table
@@ -249,7 +254,7 @@ const editEntry = async (req, res) => {
         .del();
     }
 
-    // Add new tags//
+    //Add new tags//
     //Loop through the array of the tags in the tagsToAdd array
     for (const tagName of tagsToAdd) {
       // Check if the tag already exists for the user
@@ -260,7 +265,7 @@ const editEntry = async (req, res) => {
         //The first one that match
         .first();
 
-      // If the tag doesn't exist, create it
+      //If the tag doesn't exist, create it
       if (!tag) {
         //Take the newTag
         const [newTag] = await db("tags")
@@ -271,18 +276,18 @@ const editEntry = async (req, res) => {
         tag = newTag;
       }
 
-      // Link the tag to the entry in the entry_tags table
+      //Link the tag to the entry in the entry_tags table
       await db("entry_tags").insert({
         entry_id: entryId,
         tag_id: tag.id,
       });
     }
 
-    // Refetch the updated entry from the database
+    //Refetch the updated entry from the database
     //Get the current entry of the current user
     entry = await db("entries").where({ id: entryId, user_id: userId }).first();
 
-    // Fetch the updated manual tags for this entry//
+    //Fetch the updated manual tags for this entry//
     //From the entry_tags table
     const manualTags = await db("entry_tags")
       //Where you connect to the tags table and the id of the tags from both tables
@@ -294,29 +299,30 @@ const editEntry = async (req, res) => {
       //And all the corresponding names of the tags
       .pluck("tags.name");
 
-    // Normalize manual tags for comparison with AI-generated suggestions
-    //Go through the manualTags array and trim the white space of the tag and make it all lowercase
-    const manualTagsNormalized = newTags.map((t) => t.toLowerCase());
+    //Normalize manualTags for comparison with AI generated suggestions
+    //Go through the manualTags array and make it all lowercase
+    const manualTagsNormalized = manualTags.map((t) => t.toLowerCase());
 
     // Generate AI-suggested tags based on the entry's title, text, and manual tags
     const suggestedTags = await chatgpt({
       title,
       text,
-      manualTags: tags,
+      manualTags,
     });
 
-    // Filter out AI suggestions that already exist as manual tags
+    //Filter out AI suggestions that already exist as manual tags
     //Take the results from the chatGpt function
-    //Go through the suggestedTags arrays, and if the suggestedTag is found in the existing manualTags array
+    //Map through the suggestedTags and lowercase an and trim whitespace from each tag
+    //Go through the suggestedTags arrays, and if the suggestedTag is found in the existing manualTagsNormalized array
     //Filter those tags out
-    //also trim and make those tags to lower case to make sure the comparison is accurate
+    //Also trim and make those tags to lower case to make sure the comparison is accurate
     const aiTags = suggestedTags
       .map((t) => t.trim().toLowerCase())
       .filter(
         (tag) => !manualTagsNormalized.includes(tag.trim().toLowerCase())
       );
 
-    // Return the updated entry along with manual and AI-suggested tags
+    //Return the updated entry along with manual and AI-suggested tags
     return res.status(200).send({
       data: entry,
       manualTags,
@@ -334,27 +340,36 @@ const editEntry = async (req, res) => {
 const deleteEntry = async (req, res) => {
   const userId = res.locals.userId;
   const entryId = req.params.id;
+  const { tag } = req.body;
 
   try {
-    const entry = await db("entries")
-      .where({ id: entryId, user_id: userId })
-      .first();
+    if (tag) {
+      // Delete only a tag
+      const tagRecord = await db("tags")
+        .where({ user_id: userId, name: tag })
+        .first();
 
-    if (!entry) {
-      throw new Error("Cannot find entry!");
+      if (!tagRecord) return res.status(404).send({ message: "Tag not found" });
+
+      await db("entry_tags")
+        .where({ entry_id: entryId, tag_id: tagRecord.id })
+        .del();
+
+      return res.status(200).send({ message: "Tag removed successfully" });
+    } else {
+      // Delete the entry and its tags
+      const entry = await db("entries")
+        .where({ id: entryId, user_id: userId })
+        .first();
+
+      if (!entry)
+        return res.status(404).send({ message: "Cannot find entry!" });
+
+      await db("entry_tags").where("entry_id", entryId).del();
+      await db("entries").where({ id: entryId }).del();
+
+      return res.status(200).send({ message: "Entry deleted successfully!" });
     }
-
-    //Delete the tags of the current entry
-    const deleteTag = await db("entry_tags").where("entry_id", entryId).del();
-
-    const deletedEntry = await db("entries").where({ id: entryId }).del();
-    //Delete the same tags from the entry of the current user, you get the id of the tags from the entry_tags table from the current entry
-    await db("tags")
-      .where("user_id", userId)
-      .whereNotIn("id", db("entry_tags").select("tag_id"))
-      .del();
-
-    return res.status(200).send({ message: "Entry deleted successfully!" });
   } catch (error) {
     return (404).send({ message: "There was an error deleting entry!" });
   }
